@@ -20,9 +20,6 @@ responding to this task, so that I can figure out who to attribute it
 to.  You can just respond to the task with the answers and all should be
 fine.
 
-If you forgot, your id is "7c1caf2f50d1".  But of course you have not
-forgotten that yet, you are better than that.
-
 
 
 ------------------------------------------
@@ -65,10 +62,6 @@ Remember to use your ID assigned to you in the Subject: line when
 responding to this task, so that I can figure out who to attribute it
 to.
 
-If you forgot, your id is "7c1caf2f50d1".  But why do I repeat myself?
-Of course you know your id, you made it through the first task just fine
-with it.
-
 
 
 ------------------------------------------
@@ -94,10 +87,6 @@ The tasks for this round is:
 Remember to use your ID assigned to you in the Subject: line when
 responding to this task, so that I can figure out who to attribute it
 to.
-
-If you forgot, your id is "7c1caf2f50d1".  Surely I don't need to keep
-saying this right?  I know, _you_ wouldn't forget, but someone else, of
-course they would, so I'll just leave it here for those "others".
 
 
 
@@ -144,11 +133,6 @@ Yes, the logic in the second module is crazy, and probably wrong, but
 don't focus on that, just look at the patterns here, and fix up the
 coding style, do not remove lines of code.
 
-As always, please remember to use your ID assigned to you in the
-Subject: line when responding to this task, so that I can figure out who
-to attribute it to.  And if you forgot (which of course you have not,
-we've been through all of this before), your id is "7c1caf2f50d1".
-
 
 
 ------------------------------------------
@@ -168,9 +152,6 @@ So, simple task this time around:
 Yes, so simple, and yet, it's a bit tricky.  As a hint, go read chapter
 14 of the book, "Linux Device Drivers, 3rd edition."  Don't worry, it's
 free, and online, no need to go buy anything.
-
-As always, please remember to use your ID assigned to you, yadda yadda
-yadda...  It's "7c1caf2f50d1" of course.
 
 
 
@@ -205,9 +186,6 @@ The task this time is this:
     unregistered when it is unloaded.
   - Provide some "proof" this all works properly.
 
-As you will be putting your id into the kernel module, of course you
-haven't forgotten it, but just to be safe, it's "7c1caf2f50d1".
-
 
 
 ------------------------------------------
@@ -236,10 +214,6 @@ Linux kernel is developed in Documentation/development-process/ in the
 kernel source itself.  It's a great read, and should tell you all you
 never wanted to know about what Linux kernel developers do and how they
 do it.
-
-As always, please respond to this challenge with your id.  I know you
-know what it is.  I'll not even include it this time, I trust you.
-Don't make me feel that is a mistake.
 
 
 
@@ -282,9 +256,6 @@ The task, in specifics is:
   - When the module is unloaded, all of the debugfs files are cleaned
     up, and any memory allocated is freed.
   - Provide some "proof" this all works.
-
-Again, you are using your id in the code, so you know what it is by now,
-no need to repeat it again.
 
 
 
@@ -383,10 +354,6 @@ For this task:
 Submit both the patch, in proper kernel commit form, and "proof" of it
 working properly on your machine.
 
-And as always, please use your id in the subject line.  If you happened
-to forget it, as it has been a while since I reminded you of it, it is
-"7c1caf2f50d1".
-
 
 
 ------------------------------------------
@@ -458,10 +425,6 @@ task 04, that does the following:
    Bonus points for properly checking return values of the above
    functions.
 
-As always, please send the full module (following the proper kernel
-coding style rules), and "proof" of it working properly.  And remember
-to use your id of "7c1caf2f50d1" in the Subject line properly.
-
 
 
 ------------------------------------------
@@ -523,8 +486,6 @@ you make this patch against, to give my virtual machines a chance to
 figure out how to apply it.
 
 Also provide some kind of proof that you tested the patch.
-
-And, in case you happened to forget it, your id is "7c1caf2f50d1".
 
 
 
