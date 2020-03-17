@@ -21,8 +21,8 @@ make nconfig
 
 ```
 qemu-img create qemu-image.img 1g
-qemu-system-x86_64 -kernel bzImage
-                     -hda qemu-image.img
-                     -append "root=/dev/sda"
-                     --enable-kvm
+qemu-system-x86_64 -kernel arch/x86/boot/bzImage \
+	--enable-kvm \
+	-hda qemu-image.img \
+	-append "root=/dev/sda"
 ```
