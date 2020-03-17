@@ -1,0 +1,18 @@
+10,13c10,13
+< static __init
+< int initialize(void) {
+<               printk(KERN_DEBUG "HELLO WORLD");
+< 	      return 0;
+---
+> static __init int initialize(void)
+> {
+>     printk(KERN_DEBUG "HELLO WORLD");
+>     return 0;
+16,18c16,18
+< static __exit
+< void destroy(void) {
+<               printk(KERN_DEBUG "GOODBYE WORLD");
+---
+> static __exit void destroy(void)
+> {
+>     printk(KERN_DEBUG "GOODBYE WORLD");
