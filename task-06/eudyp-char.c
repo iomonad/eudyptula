@@ -45,6 +45,7 @@ static ssize_t driver_write(struct file *fp, const char __user *user,
 {
     char input[128];
 
+    copy_from_user(input, user, 128);
     if ((strcmp(input, "IOMONAD\n")) == 0) {
 	return strlen(user);
     } else {
