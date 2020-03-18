@@ -40,11 +40,16 @@ static ssize_t driver_read(struct file *fp, char *user,
     return len; /* RETURN BUFFER LEN */
 }
 
-static ssize_t driver_write(struct file *fp, const char *user,
+static ssize_t driver_write(struct file *fp, const char __user *user,
 			    size_t size, loff_t *loff)
 {
-    printk(KERN_ALERT "USER WRITE DRIVER -- NOT ALLOWED TO WRITE");
-    return 0;
+    char input[128];
+
+    if ((strcmp(input, "IOMONAD\n")) == 0) {
+	return strlen(user);
+    } else {
+	return -EINVAL;
+    }
 }
 
 static int driver_release(struct inode *ip, struct file *fp)
@@ -54,6 +59,7 @@ static int driver_release(struct inode *ip, struct file *fp)
 }
 
 static struct file_operations fops = {
+    .owner = THIS_MODULE,
     .open = driver_open,
     .read = driver_read,
     .write = driver_write,
