@@ -3,6 +3,7 @@
 #include <linux/fs.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
+#include <linux/uaccess.h>
 #include <linux/debugfs.h>
 
 MODULE_LICENSE("GPL");
@@ -23,13 +24,29 @@ static int id_open(struct inode *ip, struct file *fp)
 static ssize_t id_read(struct file *fp, char __user *user, size_t size,
 		       loff_t *loff)
 {
-	return 0;
+	ssize_t len;
+	static char local_buffer[] = "iomonad";
+
+	len = sizeof(local_buffer) / sizeof(local_buffer[0]);
+	if (copy_to_user(user, local_buffer, len)) {
+		printk(KERN_ALERT "COPY ON USER");
+		return 0;
+	}
+	return (len);
 }
 
 static ssize_t id_write(struct file *fp, const char __user *buffer, size_t size,
 			loff_t *loff)
 {
-	return 0;
+	char input[128];
+
+	copy_from_user(input, buffer, 128);
+	printk(KERN_INFO "Got buffer: \"%s\"", input);
+	if ((strncmp(input, "iomonad", 7)) == 0) {
+		return strlen(buffer);
+	} else {
+		return -EINVAL; /* write error: invalid argument */
+	}
 }
 
 static struct file_operations id_fops = { .open = id_open,
@@ -83,6 +100,7 @@ static struct file_operations foo_fops = { .open = foo_open,
 					   .write = foo_write };
 
 /** MODULE CORE */
+
 static __init int initialize(void)
 {
 	struct dentry *id, *jiffries, *foo;
@@ -92,14 +110,17 @@ static __init int initialize(void)
 		return 1;
 	}
 	if ((id = debugfs_create_file("id", 777, mentry, NULL, &id_fops)) ==
-	    NULL)
+	    NULL) {
 		return 1;
+	}
 	if ((jiffries = debugfs_create_file("jiffries", 777, mentry, NULL,
-					    &jiffries_fops)) == NULL)
+					    &jiffries_fops)) == NULL) {
 		return 1;
+	}
 	if ((foo = debugfs_create_file("foo", 777, mentry, NULL, &foo_fops)) ==
-	    NULL)
+	    NULL) {
 		return 1;
+	}
 	return 0;
 }
 
