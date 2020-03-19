@@ -22,14 +22,14 @@ static ssize_t id_read(struct file *fp, char __user *user, size_t size,
 		       loff_t *loff)
 {
 	ssize_t len;
-	static char local_buffer[] = "iomonad";
+	static char local_buffer[] = "iomonad\n";
 
 	len = sizeof(local_buffer) / sizeof(local_buffer[0]);
 	if (copy_to_user(user, local_buffer, len)) {
 		printk(KERN_ALERT "COPY ON USER");
-		return 0;
+		return -EAGAIN;
 	}
-	return (len);
+	return len;
 }
 
 static ssize_t id_write(struct file *fp, const char __user *buffer, size_t size,
@@ -53,23 +53,52 @@ static struct file_operations id_fops = { .read = id_read, .write = id_write };
 static ssize_t jiffies_read(struct file *fp, char __user *user, size_t size,
 			    loff_t *loff)
 {
-	return 0;
+	char buffer[128];
+	ssize_t len;
+	unsigned long jiffie_now;
+
+	jiffie_now = jiffies;
+	sprintf(buffer, "%lu\n", jiffie_now);
+	len = sizeof(buffer) / sizeof(buffer[0]);
+	if (copy_to_user(user, buffer, len)) {
+		printk(KERN_ALERT "COPY ON USER");
+		return -EAGAIN;
+	}
+	return len;
 }
 
 static struct file_operations jiffies_fops = { .read = jiffies_read };
 
 /* `foo` file implementation */
 
+static char shared_foo_buffer[4096]; /* HARDCODED PAGE SIZE */
+
 static ssize_t foo_read(struct file *fp, char __user *user, size_t size,
 			loff_t *loff)
 {
-	return 0;
+	ssize_t len;
+
+	len = sizeof(shared_foo_buffer) / sizeof(shared_foo_buffer[0]);
+	if (copy_to_user(user, shared_foo_buffer, len)) {
+		printk(KERN_ALERT "COPY ON USER");
+		return -EAGAIN;
+	}
+	return len;
 }
 
 static ssize_t foo_write(struct file *fp, const char __user *buffer,
 			 size_t size, loff_t *loff)
 {
-	return 0;
+	size_t len;
+	char temporary[4096];
+
+	len = sizeof(shared_foo_buffer) / sizeof(shared_foo_buffer[0]);
+	if (copy_from_user(temporary, buffer, 4096)) {
+		printk(KERN_ALERT "COPY FROM USER");
+		return -EAGAIN;
+	}
+	memcpy(shared_foo_buffer, temporary, 4096);
+	return len;
 }
 
 static struct file_operations foo_fops = { .read = foo_read,
@@ -93,7 +122,7 @@ static __init int initialize(void)
 					   &jiffies_fops)) == NULL) {
 		return 1;
 	}
-	if ((foo = debugfs_create_file("foo", 777, mentry, NULL, &foo_fops)) ==
+	if ((foo = debugfs_create_file("foo", 604, mentry, NULL, &foo_fops)) ==
 	    NULL) {
 		return 1;
 	}
