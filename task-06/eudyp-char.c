@@ -16,7 +16,7 @@ static int major;
 static int busy;
 static int done;
 
-static char buffer[] = "DEAD BEEF\n";
+static char buffer[] = "iomonad\n";
 
 static int driver_open(struct inode *ip, struct file *fp)
 {
@@ -24,7 +24,7 @@ static int driver_open(struct inode *ip, struct file *fp)
     return 0;
 }
 
-static ssize_t driver_read(struct file *fp, char *user,
+static ssize_t driver_read(struct file *fp, char __user *user,
 			   size_t size, loff_t *loff)
 {
     ssize_t len;
@@ -40,16 +40,17 @@ static ssize_t driver_read(struct file *fp, char *user,
     return len; /* RETURN BUFFER LEN */
 }
 
-static ssize_t driver_write(struct file *fp, const char __user *user,
+static ssize_t driver_write(struct file *fp, const char __user *buffer,
 			    size_t size, loff_t *loff)
 {
     char input[128];
 
-    copy_from_user(input, user, 128);
-    if ((strcmp(input, "IOMONAD\n")) == 0) {
-	return strlen(user);
+    copy_from_user(input, buffer, 128);
+    printk(KERN_INFO "Got buffer: \"%s\"", input);
+    if ((strncmp(input, "iomonad", 7)) == 0) {
+	return strlen(buffer);
     } else {
-	return -EINVAL;
+	return -EINVAL;		/* write error: invalid argument */
     }
 }
 
