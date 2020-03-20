@@ -1,6 +1,7 @@
 /* TASK_08 */
 
 #include <linux/fs.h>
+#include <linux/mutex.h>
 #include <linux/timer.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
@@ -13,6 +14,7 @@ MODULE_DESCRIPTION("My eudyptula debugfs implementation");
 MODULE_AUTHOR("IOMONAD");
 
 #define DEBUGFS_FOLDER_NAME "eudyptula"
+#define KERN_PSIZE 4096
 
 static struct dentry *mentry = NULL;
 
@@ -71,7 +73,7 @@ static struct file_operations jiffies_fops = { .read = jiffies_read };
 
 /* `foo` file implementation */
 
-static char shared_foo_buffer[4096]; /* HARDCODED PAGE SIZE */
+static char shared_foo_buffer[KERN_PSIZE]; /* HARDCODED PAGE SIZE */
 
 static ssize_t foo_read(struct file *fp, char __user *user, size_t size,
 			loff_t *loff)
@@ -90,14 +92,15 @@ static ssize_t foo_write(struct file *fp, const char __user *buffer,
 			 size_t size, loff_t *loff)
 {
 	size_t len;
-	char temporary[4096];
+	char *temporary;
 
-	len = sizeof(shared_foo_buffer) / sizeof(shared_foo_buffer[0]);
-	if (copy_from_user(temporary, buffer, 4096)) {
-		printk(KERN_ALERT "COPY FROM USER");
-		return -EAGAIN;
+	if ((temporary = (char *)kmalloc(KERN_PSIZE, GFP_KERNEL)) == NULL) {
+		return 0;
 	}
-	memcpy(shared_foo_buffer, temporary, 4096);
+	len = sizeof(shared_foo_buffer) / sizeof(shared_foo_buffer[0]);
+	copy_from_user(temporary, buffer,
+		       KERN_PSIZE); /* Errors need to be checked */
+	memcpy(shared_foo_buffer, temporary, KERN_PSIZE);
 	return len;
 }
 
@@ -110,6 +113,10 @@ static __init int initialize(void)
 {
 	struct dentry *id, *jiffies, *foo;
 
+	if ((shared_foo_buffer = (char *)kmalloc(KERN_PSIZE, GFP_KERNEL)) ==
+	    NULL) {
+		return 1;
+	}
 	if ((mentry = debugfs_create_dir(DEBUGFS_FOLDER_NAME, NULL)) == NULL) {
 		printk(KERN_ALERT "Error while creating debugfs root folder");
 		return 1;
@@ -131,6 +138,9 @@ static __init int initialize(void)
 
 static __exit void destroy(void)
 {
+	if (shared_foo_buffer != NULL) {
+		kfree(shared_foo_buffer);
+	}
 	return debugfs_remove_recursive(mentry);
 }
 
