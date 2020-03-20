@@ -7,6 +7,7 @@
 #include <linux/kernel.h>
 #include <linux/uaccess.h>
 #include <linux/debugfs.h>
+#include <linux/slab.h>
 #include <linux/jiffies.h>
 
 MODULE_LICENSE("GPL");
@@ -73,18 +74,23 @@ static struct file_operations jiffies_fops = { .read = jiffies_read };
 
 /* `foo` file implementation */
 
-static char shared_foo_buffer[KERN_PSIZE]; /* HARDCODED PAGE SIZE */
+static ssize_t foo_busy;
+static ssize_t foo_done;
+static char shared_foo_buffer[KERN_PSIZE]; /* HC BUFFER */
 
 static ssize_t foo_read(struct file *fp, char __user *user, size_t size,
 			loff_t *loff)
 {
 	ssize_t len;
 
+	if (foo_done)
+		return 0;
 	len = sizeof(shared_foo_buffer) / sizeof(shared_foo_buffer[0]);
 	if (copy_to_user(user, shared_foo_buffer, len)) {
 		printk(KERN_ALERT "COPY ON USER");
 		return -EAGAIN;
 	}
+	foo_done = 1;
 	return len;
 }
 
@@ -94,6 +100,7 @@ static ssize_t foo_write(struct file *fp, const char __user *buffer,
 	size_t len;
 	char *temporary;
 
+	foo_busy = 1; /* Reset on release cb */
 	if ((temporary = (char *)kmalloc(KERN_PSIZE, GFP_KERNEL)) == NULL) {
 		return 0;
 	}
@@ -104,8 +111,15 @@ static ssize_t foo_write(struct file *fp, const char __user *buffer,
 	return len;
 }
 
+static int foo_release(struct inode *ip, struct file *fp)
+{
+	foo_done = foo_busy = 0x0;
+	return 0;
+}
+
 static struct file_operations foo_fops = { .read = foo_read,
-					   .write = foo_write };
+					   .write = foo_write,
+					   .release = foo_release };
 
 /** MODULE CORE */
 
@@ -113,10 +127,7 @@ static __init int initialize(void)
 {
 	struct dentry *id, *jiffies, *foo;
 
-	if ((shared_foo_buffer = (char *)kmalloc(KERN_PSIZE, GFP_KERNEL)) ==
-	    NULL) {
-		return 1;
-	}
+	foo_done = foo_busy = 0x0;
 	if ((mentry = debugfs_create_dir(DEBUGFS_FOLDER_NAME, NULL)) == NULL) {
 		printk(KERN_ALERT "Error while creating debugfs root folder");
 		return 1;
