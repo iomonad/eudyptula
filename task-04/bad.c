@@ -7,15 +7,15 @@ MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("TASK01");
 MODULE_AUTHOR("IOMONAD");
 
-static __init
-int initialize(void) {
-              printk(KERN_DEBUG "HELLO WORLD");
-	      return 0;
+static __init int initialize(void)
+{
+	printk(KERN_DEBUG "HELLO WORLD");
+	return 0;
 }
 
-static __exit
-void destroy(void) {
-              printk(KERN_DEBUG "GOODBYE WORLD");
+static __exit void destroy(void)
+{
+	printk(KERN_DEBUG "GOODBYE WORLD");
 }
 
 module_init(initialize);
