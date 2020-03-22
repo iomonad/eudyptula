@@ -39,6 +39,9 @@ Then apply your patch with `git am`
 cat *.patch | git am
 ```
 
+Note: Dont't forget to add the `Signed-off-by:` field
+on the top of your patch.
+
 ## Checking patch
 
 ```bash
