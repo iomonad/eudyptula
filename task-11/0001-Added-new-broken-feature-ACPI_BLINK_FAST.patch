@@ -1,0 +1,75 @@
+From caf1c62f91e0b130042230193e3689401acd77df Mon Sep 17 00:00:00 2001
+From: Clement T <me@trosa.io>
+Date: Sun, 22 Mar 2020 14:49:20 +0100
+Subject: [PATCH] Added new broken feature: ACPI_BLINK_FAST !
+Signed-off-by: Clement T <me@trosa.io>
+
+---
+ drivers/platform/x86/thinkpad_acpi.c | 14 ++++++++++++++
+ 1 file changed, 14 insertions(+)
+
+diff --git a/drivers/platform/x86/thinkpad_acpi.c b/drivers/platform/x86/thinkpad_acpi.c
+index 8eaadbaf8ffa..f31e8044b239 100644
+--- a/drivers/platform/x86/thinkpad_acpi.c
++++ b/drivers/platform/x86/thinkpad_acpi.c
+@@ -13,6 +13,10 @@
+ 
+ /*
+  *  Changelog:
++ *  2020-03-22          Added some debug in source code.
++ *                      Yes, not a lot but at least it's honest
++ *                      work.
++ *
+  *  2007-10-20		changelog trimmed down
+  *
+  *  2007-03-27  0.14	renamed to thinkpad_acpi and moved to
+@@ -368,6 +372,7 @@ enum led_status_t {
+ 	TPACPI_LED_OFF = 0,
+ 	TPACPI_LED_ON,
+ 	TPACPI_LED_BLINK,
++	TPACPI_LED_BLINK_FAST
+ };
+ 
+ /* tpacpi LED class */
+@@ -5830,9 +5835,12 @@ static int led_get_status(const unsigned int led)
+ 				((status == 1) ?
+ 					TPACPI_LED_ON :
+ 					TPACPI_LED_BLINK);
++		if (status == 2)
++			led_s = TPACPI_LED_BLINK_FAST;
+ 		tpacpi_led_state_cache[led] = led_s;
+ 		return led_s;
+ 	default:
++		pr_fmt("Led is not supported");
+ 		return -ENXIO;
+ 	}
+ 
+@@ -5866,6 +5874,9 @@ static int led_set_status(const unsigned int led,
+ 		if (unlikely(tpacpi_is_led_restricted(led)))
+ 			return -EPERM;
+ 		rc = ec_write(TPACPI_LED_EC_HLMS, (1 << led));
++		if (rc >= 0)
++			rc = ec_write(TPACPI_LED_EC_HLCL,
++				  (ledstatus != TPACPI_LED_BLINK_FAST) << led);
+ 		if (rc >= 0)
+ 			rc = ec_write(TPACPI_LED_EC_HLBL,
+ 				      (ledstatus == TPACPI_LED_BLINK) << led);
+@@ -5884,6 +5895,7 @@ static int led_set_status(const unsigned int led,
+ 			return -EIO;
+ 		break;
+ 	default:
++		pr_fmt("Led is not supported");
+ 		return -ENXIO;
+ 	}
+ 
+@@ -6157,6 +6169,8 @@ static int led_write(char *buf)
+ 			s = TPACPI_LED_ON;
+ 		} else if (strstr(cmd, "blink")) {
+ 			s = TPACPI_LED_BLINK;
++		} else if (strstr(cmd, "blink_fast")) {
++			s = TPACPI_BLINK_FAST;
+ 		} else {
+ 			return -EINVAL;
+ 		}
+2.25.2
+

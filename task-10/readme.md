@@ -15,7 +15,7 @@ git diff master > my-lovely-patch.patch
 ## Checking the patch
 
 ```bash
-$SRCROOT/scripts/checkpatch.pl my-lovely-patch.pl
+$SRCROOT/scripts/checkpatch.pl my-lovely-patch.patch
 total: 0 errors, 0 warnings, 0 checks, 942 lines checked
 
 my-lovely-patch.patch has no obvious style problems and is ready for submission.
@@ -27,7 +27,7 @@ First, find the proper name and mailing lists to
 send it to by running the tool:
 
 ```bash
-$SRCROOT/scripts/get_maintainer.pl my-lovely-patch.pl
+$SRCROOT/scripts/get_maintainer.pl my-lovely-patch.patch
 Foo bar Quux <foobarquu@linuxfoundation.org> (supporter:STAGING SUBSYSTEM,commit_signer:6/8=75%)
 [...]
 devel@driverdev.osuosl.org (open list:STAGING SUBSYSTEM)
