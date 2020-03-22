@@ -2,6 +2,7 @@ From caf1c62f91e0b130042230193e3689401acd77df Mon Sep 17 00:00:00 2001
 From: Clement T <me@trosa.io>
 Date: Sun, 22 Mar 2020 14:49:20 +0100
 Subject: [PATCH] Added new broken feature: ACPI_BLINK_FAST !
+Signed-off-by: Clement T <me@trosa.io>
 
 ---
  drivers/platform/x86/thinkpad_acpi.c | 14 ++++++++++++++
@@ -49,7 +50,7 @@ index 8eaadbaf8ffa..f31e8044b239 100644
  		rc = ec_write(TPACPI_LED_EC_HLMS, (1 << led));
 +		if (rc >= 0)
 +			rc = ec_write(TPACPI_LED_EC_HLCL,
-+				      (ledstatus != TPACPI_LED_BLINK_FAST) << led);
++				  (ledstatus != TPACPI_LED_BLINK_FAST) << led);
  		if (rc >= 0)
  			rc = ec_write(TPACPI_LED_EC_HLBL,
  				      (ledstatus == TPACPI_LED_BLINK) << led);
@@ -70,6 +71,5 @@ index 8eaadbaf8ffa..f31e8044b239 100644
  		} else {
  			return -EINVAL;
  		}
--- 
 2.25.2
 
