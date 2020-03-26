@@ -1,0 +1,84 @@
+From 5ce5f2faa3c59c3bfd416e150f822948cae341cb Mon Sep 17 00:00:00 2001
+From: Clement T <me@trosa.io>
+Date: Thu, 26 Mar 2020 16:32:52 +0100
+Subject: [PATCH] Bump to 'slab_memory' allocators
+
+---
+ task-12/identity.c | 23 +++++++++++++++++++----
+ 1 file changed, 19 insertions(+), 4 deletions(-)
+
+diff --git a/task-12/identity.c b/task-12/identity.c
+index 88773f9..2e83f40 100644
+--- a/task-12/identity.c
++++ b/task-12/identity.c
+@@ -9,10 +9,14 @@
+ #include <linux/slab.h>
+ 
+ MODULE_LICENSE("GPL");
+-MODULE_DESCRIPTION("Linked List Kernel Impl");
++MODULE_DESCRIPTION("Linked List Kernel Impl w/ private slab cache");
+ MODULE_AUTHOR("IOMONAD");
+ 
+ #define NAME_LEN 20
++#define SLAB_ALLOCATOR_NAME "eudyptula"
++
++/* KMEM CACHE */
++struct kmem_cache *icache = NULL;
+ 
+ struct identity {
+ 	char name[NAME_LEN];
+@@ -45,7 +49,7 @@ int identity_create(char *name, int id)
+ 		/* ID EXISTS */
+ 		return 1;
+ 	}
+-	if (!(new = kmalloc(sizeof(*new), GFP_KERNEL))) {
++	if (!(new = kmem_cache_alloc(icache, GFP_KERNEL))) {
+ 		/* ALLOC FAILED */
+ 		return 2;
+ 	}
+@@ -67,7 +71,7 @@ void identity_destroy(int id)
+ 		return;
+ 	}
+ 	list_del(&(temp->lst));
+-	kfree(temp);
++	kmem_cache_free(icache, temp);
+ 	return;
+ }
+ 
+@@ -75,6 +79,14 @@ static __init int initialize(void)
+ {
+ 	struct identity *temp = NULL;
+ 
++	if (!(icache = kmem_cache_create(SLAB_ALLOCATOR_NAME,
++					 sizeof(struct identity),
++
++					 0, 0, NULL))) {
++		return -ENOMEM;
++	}
++
++	/* EXERCICES PART */
+ 	if (identity_create("Alice", 1))
+ 		pr_debug("error creating Alice\n");
+ 	if (identity_create("Bob", 2))
+@@ -86,7 +98,6 @@ static __init int initialize(void)
+ 
+ 	temp = identity_find(3);
+ 	pr_debug("id 3 = %s\n", temp->name);
+-
+ 	temp = identity_find(42);
+ 	if (temp == NULL)
+ 		pr_debug("id 42 not found\n");
+@@ -102,6 +113,10 @@ static __init int initialize(void)
+ 
+ static __exit void destroy(void)
+ {
++	if (icache != NULL) {
++		kmem_cache_destroy(icache);
++	}
++	return;
+ }
+ 
+ module_init(initialize);
+-- 
+2.26.0
+
