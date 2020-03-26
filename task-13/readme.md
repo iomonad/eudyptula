@@ -1,0 +1,3 @@
+A device driver often ends up allocating many objects of the same size, over and over. Given that the kernel already maintains a set of memory pools of objects that are all the same size, why not add some special pools for these high-volume objects? In fact, the kernel does implement a facility to create this sort of pool, which is often called a lookaside cache. Device drivers normally do not exhibit the sort of memory behavior that justifies using a lookaside cache, but there can be exceptions; the USB and SCSI drivers in Linux 2.6 use caches.
+
+The cache manager in the Linux kernel is sometimes called the "slab allocator." For that reason, its functions and types are declared in <linux/slab.h>. The slab allocator implements caches that have a type of `kmem_cache_t`;
