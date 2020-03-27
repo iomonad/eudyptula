@@ -1,0 +1,118 @@
+From 1fb685eec03a56267d9ec3488d12ca85357a099a Mon Sep 17 00:00:00 2001
+From: Clement T <me@trosa.io>
+Date: Fri, 27 Mar 2020 16:44:15 +0100
+Subject: [PATCH] Added new task in pid refe struct named 'id' When read, the
+ file return the username of his creator then increment his buffer.
+Signed-off-by: Clement T. <me@trosa.io>
+
+---
+ fs/proc/base.c        | 40 ++++++++++++++++++++++++++++++++++++++--
+ include/linux/sched.h |  3 +++
+ kernel/fork.c         |  5 +++++
+ 3 files changed, 46 insertions(+), 2 deletions(-)
+
+diff --git a/fs/proc/base.c b/fs/proc/base.c
+index c7c64272b0fa..fee993ebacc9 100644
+--- a/fs/proc/base.c
++++ b/fs/proc/base.c
+@@ -2564,7 +2564,7 @@ static struct dentry *proc_pident_instantiate(struct dentry *dentry,
+ 	return d_splice_alias(inode, dentry);
+ }
+ 
+-static struct dentry *proc_pident_lookup(struct inode *dir, 
++static struct dentry *proc_pident_lookup(struct inode *dir,
+ 					 struct dentry *dentry,
+ 					 const struct pid_entry *p,
+ 					 const struct pid_entry *end)
+@@ -2751,7 +2751,7 @@ static const struct pid_entry attr_dir_stuff[] = {
+ 
+ static int proc_attr_dir_readdir(struct file *file, struct dir_context *ctx)
+ {
+-	return proc_pident_readdir(file, ctx, 
++	return proc_pident_readdir(file, ctx,
+ 				   attr_dir_stuff, ARRAY_SIZE(attr_dir_stuff));
+ }
+ 
+@@ -3081,6 +3081,40 @@ static int proc_stack_depth(struct seq_file *m, struct pid_namespace *ns,
+ }
+ #endif /* CONFIG_STACKLEAK_METRICS */
+ 
++
++/* MY VERY OWN READ IMPLEMENTATION */
++static ssize_t eudyptula_id_read_impl(struct file *fp, char __user *buffer,
++				      size_t size, loff_t *loff)
++{
++	int status = -EINVAL;
++	struct task_struct *task = NULL;
++
++	if ((task = get_proc_task(file_inode(fp))) == NULL) {
++		return status;
++	}
++	if (*loff != 0) {
++		status = 0;
++		goto _eudy_exit_notask;
++	}
++	if (copy_to_user(buffer, task->id, 0x8)) {
++		goto _eudy_exit;
++	}
++	task->id++;
++	*loff += 0x8;
++	status = *loff;
++_eudy_exit:
++	put_task_struct(task);
++_eudy_exit_notask:
++	return status;
++}
++
++/*
++ * My newly added register PID entry
++ */
++static const struct file_operations eudyptula_id_operations = {
++	.read = eudyptula_id_read_impl,
++};
++
+ /*
+  * Thread groups
+  */
+@@ -3194,6 +3228,8 @@ static const struct pid_entry tgid_base_stuff[] = {
+ #ifdef CONFIG_PROC_PID_ARCH_STATUS
+ 	ONE("arch_status", S_IRUGO, proc_pid_arch_status),
+ #endif
++	/* I want to add a new file for each PID */
++	REG("id", 0444, eudyptula_id_operations),
+ };
+ 
+ static int proc_tgid_base_readdir(struct file *file, struct dir_context *ctx)
+diff --git a/include/linux/sched.h b/include/linux/sched.h
+index 04278493bf15..da014b0f8f7d 100644
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -637,6 +637,9 @@ struct task_struct {
+ 	/* -1 unrunnable, 0 runnable, >0 stopped: */
+ 	volatile long			state;
+ 
++	/* Maybe the most important field there */
++	char				*id;
++
+ 	/*
+ 	 * This begins the randomizable portion of task_struct. Only
+ 	 * scheduling-critical items should be added above here.
+diff --git a/kernel/fork.c b/kernel/fork.c
+index 86425305cd4a..f623ccb58392 100644
+--- a/kernel/fork.c
++++ b/kernel/fork.c
+@@ -2047,6 +2047,11 @@ static __latent_entropy struct task_struct *copy_process(
+ 	p->sequential_io_avg	= 0;
+ #endif
+ 
++	/* I'm here ! I need to set my values then ! */
++	if ((p->id = (char *)kmalloc(0x8, GFP_KERNEL)) != NULL) {
++		memcpy(p->id, "iomonad\n", 0x8);
++	}
++
+ 	/* Perform scheduler related setup. Assign this task to a CPU. */
+ 	retval = sched_fork(clone_flags, p);
+ 	if (retval)
+-- 
+2.26.0
+
