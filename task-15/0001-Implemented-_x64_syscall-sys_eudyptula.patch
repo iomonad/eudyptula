@@ -1,0 +1,84 @@
+From c9577e8bd2991a222d02ae9126f91356fc46ada0 Mon Sep 17 00:00:00 2001
+From: Clement T <me@trosa.io>
+Date: Sat, 28 Mar 2020 16:54:46 +0100
+Subject: [PATCH] Implemented _x64_syscall `sys_eudyptula`
+
+---
+ arch/x86/entry/syscalls/syscall_64.tbl |  1 +
+ arch/x86/kernel/Makefile               |  5 +++++
+ arch/x86/kernel/eudyptula.c            | 21 +++++++++++++++++++++
+ include/linux/syscalls.h               |  2 ++
+ 4 files changed, 29 insertions(+)
+ create mode 100644 arch/x86/kernel/eudyptula.c
+
+diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
+index 44d510bc9b78..ee54e8477c3b 100644
+--- a/arch/x86/entry/syscalls/syscall_64.tbl
++++ b/arch/x86/entry/syscalls/syscall_64.tbl
+@@ -359,6 +359,7 @@
+ 435	common	clone3			__x64_sys_clone3/ptregs
+ 437	common	openat2			__x64_sys_openat2
+ 438	common	pidfd_getfd		__x64_sys_pidfd_getfd
++439    64      eudyptula               __x64_sys_eudyptula
+ 
+ #
+ # x32-specific system call numbers start at 512 to avoid cache impact
+diff --git a/arch/x86/kernel/Makefile b/arch/x86/kernel/Makefile
+index 9b294c13809a..3db685c4b649 100644
+--- a/arch/x86/kernel/Makefile
++++ b/arch/x86/kernel/Makefile
+@@ -64,6 +64,11 @@ obj-y			+= pci-iommu_table.o
+ obj-y			+= resource.o
+ obj-y			+= irqflags.o
+ 
++#
++# ADDING MY EUDYPTULA SYSCALL SOURCE !!!
++#
++
++obj-y                          += eudyptula.o
+ obj-y				+= process.o
+ obj-y				+= fpu/
+ obj-y				+= ptrace.o
+diff --git a/arch/x86/kernel/eudyptula.c b/arch/x86/kernel/eudyptula.c
+new file mode 100644
+index 000000000000..a9941a7d96a9
+--- /dev/null
++++ b/arch/x86/kernel/eudyptula.c
+@@ -0,0 +1,21 @@
++/*
++ * My new eudyptula syscall !
++ * For `x86_64` arch only !
++ */
++
++#include <linux/init.h>
++#include <linux/sched.h>
++#include <linux/errno.h>
++#include <linux/kernel.h>
++#include <linux/syscalls.h>
++
++SYSCALL_DEFINE2(eudyptula, int, high, int, low)
++{
++	u64 __user_id = 0xDEADBEEF;
++
++	if ((u64)(high | low) == __user_id) {
++		pr_info("EUDYPTULA: Your are the MUSH master !");
++		return 0;
++	}
++	return -EPERM;
++}
+diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+index 1815065d52f3..fdbd8c7d5aa4 100644
+--- a/include/linux/syscalls.h
++++ b/include/linux/syscalls.h
+@@ -1026,6 +1026,8 @@ asmlinkage long sys_spu_run(int fd, __u32 __user *unpc,
+ asmlinkage long sys_spu_create(const char __user *name,
+ 		unsigned int flags, umode_t mode, int fd);
+ 
++/* arch/x86/kerne/eudyptula.c */
++asmlinkage long sys_eudyptula(int high, int low);
+ 
+ /*
+  * Deprecated system calls which are still defined in
+-- 
+2.26.0
+
