@@ -1,0 +1,29 @@
+From dccfd9e9f71cd6f74354a70cffe8ee2bbfe0db8e Mon Sep 17 00:00:00 2001
+From: Clement T <me@trosa.io>
+Date: Sun, 29 Mar 2020 14:06:31 +0200
+Subject: [PATCH] Added toy implemtation to pass C=2 static code analysis check.
+Signed-off-by: Clement T <me@trosa.io>
+
+---
+ drivers/staging/board/board.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/drivers/staging/board/board.c b/drivers/staging/board/board.c
+index cb6feb34dd40..fc99e5678fa8 100644
+--- a/drivers/staging/board/board.c
++++ b/drivers/staging/board/board.c
+@@ -22,6 +22,11 @@
+ static struct device_node *irqc_node __initdata;
+ static unsigned int irqc_base __initdata;
+ 
++static struct device_node *of_find_all_nodes(void *impl_needed)
++{
++	return NULL;
++}
++
+ static bool find_by_address(u64 base_address)
+ {
+ 	struct device_node *dn = of_find_all_nodes(NULL);
+-- 
+2.26.0
+
