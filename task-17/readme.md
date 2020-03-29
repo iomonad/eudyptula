@@ -32,6 +32,11 @@ functionality available in the kernel.
 In Linux sleeping is handled by a data structure called `wait queue`,
 which is nothing but *a list of processes* waiting for an input or event.
 
+A "wait queue" in the Linux kernel is a data structure to manage threads that are
+waiting for some condition to become true; they are the normal means by which threads 
+block (or "sleep") in kernel space. Over the years, the wait queue mechanism has evolved 
+into a fairly elaborate and complicated kernel subsystem.
+
 ### Initialize
 
 ```c
