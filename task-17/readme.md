@@ -4,7 +4,7 @@
 
 Basic device setup process
 
-```
+```c
 static struct file_operations mfops = {
 	.owner = THIS_MODULE,
 	.write = driver_write,
@@ -18,7 +18,7 @@ static struct miscdevice miscdev = { .minor = MISC_DYNAMIC_MINOR,
 
 And in your `__init` handler:
 
-```
+```c
 if ((status = misc_register(&miscdev)))
 		return status;
 ```
