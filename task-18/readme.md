@@ -6,8 +6,11 @@ Implement your logic in your kthread runnable:
 
 #### Block for new event
 
-By setting the condition to always true in the event waiter,
+By setting the condition to always true in the event waiter.
 
+The process is put to sleep until the condition evaluates to true
+or a signal is received. The condition is checked each time the
+waitqueue is woken up.
 
 ```c
 	for (;;) {
