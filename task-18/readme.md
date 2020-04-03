@@ -1,108 +1,45 @@
-# Kernel Threads & Wait Queues
+# Blocking Pattern
 
-## Create the misc device
+## Delegated the work to kthread
 
-Basic device setup process
+Implement your logic in your kthread runnable:
 
-```c
-static struct file_operations mfops = {
-	.owner = THIS_MODULE,
-	.write = driver_write,
-};
+#### Block for new event
 
-static struct miscdevice miscdev = { .minor = MISC_DYNAMIC_MINOR,
-				     .name = MISCDEV_NAME,
-				     .fops = &mfops,
-				     .mode = 0222 }; /* Implement perms */
-```
+By setting the condition to always true in the event waiter,
 
-And in your `__init` handler:
 
 ```c
-if ((status = misc_register(&miscdev)))
-		return status;
+	for (;;) {
+		if (wait_event_interruptible(wee_wait, 1)) /* 1 */
+			return -ERESTARTSYS;
 ```
 
-## Implement Wait queues
-
-While writing modules there might be situations where one
-might have to wait for input some condition to occur before proceeding further.
-Tasks that need such behavior can make use of the sleep
-functionality available in the kernel.
-In Linux sleeping is handled by a data structure called `wait queue`,
-which is nothing but *a list of processes* waiting for an input or event.
-
-A "wait queue" in the Linux kernel is a data structure to manage threads that are
-waiting for some condition to become true; they are the normal means by which threads 
-block (or "sleep") in kernel space. Over the years, the wait queue mechanism has evolved 
-into a fairly elaborate and complicated kernel subsystem.
-
-### Initialize
+Then add your runnable snippet, dont' forget to sleep
+(in an interruptable state, don't go increasing the system load in a bad way):
 
 ```c
-DECLARE_WAIT_QUEUE_HEAD(wee_wait);
+		if ((it = identity_get()) != NULL) {
+			/* Make service poll relaxed */
+			msleep_interruptible(5000);
 ```
 
-### Use waiters
+#### Wake Up on events
 
-`wait_event("queue","condition")`: The task will keep waiting on the queue as long as the condition does not become true.If put to sleep using this call, the task can not be interrupted.
+On new write call, use `wake_up()`
 
-`wait_event_interruptible("queue","condition")`: similar to wait_event, but it can be interrupted by other signals too. It is always preferable to use this interruptible way of sleeping so that the task can be stopped in case the condition never becomes true. 
+wake_up() has to be called after changing any variable that could
+change the result of the wait condition.
 
-## Using Kernel Threads
-
-### Initialize your thread
+At the end of your `.write` handler, in the success case, add:
 
 ```c
-static struct task_struct *mythread = NULL;
+	wake_up(&wee_wait);
 ```
 
-And a callback:
+> Every 5 seconds each one element of the list should pop. No event should be broadcasted to the kernel once the list is empty
 
-```c
-int thread_runner(void *data)
-{
-	printk(KERN_INFO "In thread1");
-}
-```
 
-### Create your thread with runnable callback
+#### Unit Tests
 
-The `kthread_run` is a convenient wrapper for `kthread_create()` followed by
-`wake_up_process()`. Returns the kthread or ERR_PTR(-ENOMEM).
-
-```c
-mythread = kthread_run(thread_runner, NULL, MAINTHREAD_N);
-```
-
-### Killing thread
-
-```c
-kthread_stop(mythread);
-```
-
-## Testing all the things
-
-Load and check permission:
-
-```bash
-$ sudo insmod waitqueues.ko
-$ ls -l /dev/eudyptula
-c-w--w--w- 1 root root 10, 56 Mar 29 16:59 /dev/eudyptula
-```
-
-Check kernel thread (in `ps` they are in brackets):
-
-```bash
-$ ps -ef | grep "\[eudyptula\]"
-root        8960       2  0 16:59 ?        00:00:00 [eudyptula]
-```
-
-Remove & check:
-
-```bash
-sudo rmmod waitqueues.ko
-$ ps -ef | grep "\[eudyptula\]"
-```
-
-(no matchs ...)
+See `unit_test.sh` file.
