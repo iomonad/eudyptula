@@ -51,7 +51,7 @@ tsc = textsearch_prepare("kmp", PATTERN, strlen(PATTERN), GFP_KERNEL, TS_AUTOLOA
 ```
 
 Finding:
-```
+```c
     /*                     SEARCH RANGE                   */
 	/*                     <--------->                    */
  	if (skb_find_text(skb, 0, skb->len, tsc) != UINT_MAX) {
