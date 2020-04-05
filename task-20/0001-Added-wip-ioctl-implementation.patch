@@ -1,0 +1,139 @@
+From 762bd2830afed08e2f2d447d6ee10b2b77627c5a Mon Sep 17 00:00:00 2001
+From: Clement T <me@trosa.io>
+Date: Sun, 5 Apr 2020 18:48:22 +0200
+Subject: [PATCH] Added wip ioctl implementation
+
+---
+ fs/fat/dir.c                  | 70 +++++++++++++++++++++++++++++++++++
+ include/uapi/linux/msdos_fs.h |  2 +
+ 2 files changed, 72 insertions(+)
+
+diff --git a/fs/fat/dir.c b/fs/fat/dir.c
+index 054acd9fd033..f27826d45bc4 100644
+--- a/fs/fat/dir.c
++++ b/fs/fat/dir.c
+@@ -784,10 +784,64 @@ static int fat_ioctl_readdir(struct inode *inode, struct file *file,
+ 	return ret;
+ }
+ 
++/* EDYPTULA IMPLEMENTATION */
++
++static int fat_locate_existing_label(struct inode *inode,
++				     struct fat_slot_info *sinf)
++{
++	struct super_block *sb = inode->i_sb;
++
++	/* Logic based on the `int fat_scan()` function */
++	sinf->slot_off = 0;	/* Reset slot offset */
++	sinf->bh = NULL; 		/* Reset Buffer head */
++	while (fat_get_entry(inode, &sinf->slot_off,
++			     &sinf->bh, &sinf->de) >= 0) {
++		if (sinf->de->attr & ATTR_VOLUME) {
++			sinf->slot_off -= sizeof(*sinf->de);
++			sinf->nr_slots = 1;
++			sinf->i_pos = fat_make_i_pos(sb, sinf->bh, sinf->de);
++			return 0;
++		}
++	}
++	return -ENOENT;
++}
++
++static int fat_ioctl_set_label(struct inode *dir, unsigned long arg)
++{
++	char dname[MSDOS_NAME];	/* Maximum name lenght */
++	struct super_block *sb = dir->i_sb; /* Superblock  */
++	struct msdos_sb_info *sbi = MSDOS_SB(sb); /* Superblock Information */
++	struct fat_slot_info sinfo;		  /* slot Information */
++	struct inode *new_inode = NULL;
++
++	if (copy_from_user(dname, (unsigned char*)arg, MSDOS_NAME))
++		return -EFAULT;
++	if (fat_locate_existing_label(dir, &sinfo)) { /* Update */
++
++	} else {		/* Create */
++		mutex_lock(&sbi->s_lock);
++		memcpy(&sinfo.de->name, dname, MSDOS_NAME);
++		new_inode = fat_build_inode(sb, sinfo.de, sinfo.i_pos);
++		mark_inode_dirty(new_inode); /* Notice notifications */
++		iput(new_inode);	     /* Put new Inode */
++		mutex_unlock(&sbi->s_lock);
++	}
++	/* dir->i_version++; */
++	if (IS_DIRSYNC(dir))
++		(void)fat_sync_inode(dir);
++	else
++		mark_inode_dirty(dir);
++	/* Update State */
++	if (sbi->dirty)
++		return -ENOTTY;
++	return 0;
++}
++
+ static long fat_dir_ioctl(struct file *filp, unsigned int cmd,
+ 			  unsigned long arg)
+ {
+ 	struct inode *inode = file_inode(filp);
++	struct inode *dir = NULL;
+ 	struct __fat_dirent __user *d1 = (struct __fat_dirent __user *)arg;
+ 	int short_only, both;
+ 
+@@ -800,6 +854,13 @@ static long fat_dir_ioctl(struct file *filp, unsigned int cmd,
+ 		short_only = 0;
+ 		both = 1;
+ 		break;
++	case FAT_IOCTL_SET_LABEL:
++		short_only = 1;
++		both = 0;
++		/* INODE -> SUPERBLOCK -> ROOT DIR MOUNT POINT INODE */
++		if ((dir = inode->i_sb->s_root->d_inode))
++			return fat_ioctl_set_label(dir, arg);
++		break;
+ 	default:
+ 		return fat_generic_ioctl(filp, cmd, arg);
+ 	}
+@@ -821,6 +882,7 @@ static long fat_dir_ioctl(struct file *filp, unsigned int cmd,
+ #ifdef CONFIG_COMPAT
+ #define	VFAT_IOCTL_READDIR_BOTH32	_IOR('r', 1, struct compat_dirent[2])
+ #define	VFAT_IOCTL_READDIR_SHORT32	_IOR('r', 2, struct compat_dirent[2])
++#define FAT_IOCTL_SET_LABEL32           _IOW('r', 0x14, const __user char*)
+ 
+ FAT_IOCTL_FILLDIR_FUNC(fat_compat_ioctl_filldir, compat_dirent)
+ 
+@@ -828,6 +890,7 @@ static long fat_compat_dir_ioctl(struct file *filp, unsigned cmd,
+ 				 unsigned long arg)
+ {
+ 	struct inode *inode = file_inode(filp);
++	struct inode *dir = NULL;
+ 	struct compat_dirent __user *d1 = compat_ptr(arg);
+ 	int short_only, both;
+ 
+@@ -840,6 +903,13 @@ static long fat_compat_dir_ioctl(struct file *filp, unsigned cmd,
+ 		short_only = 0;
+ 		both = 1;
+ 		break;
++	case FAT_IOCTL_SET_LABEL32:
++		short_only = 0;
++		both = 1;
++		/* INODE -> SUPERBLOCK -> ROOT DIR MOUNT POINT INODE */
++		if ((dir = inode->i_sb->s_root->d_inode))
++			return fat_ioctl_set_label(dir, (unsigned long)arg);
++		break;
+ 	default:
+ 		return fat_generic_ioctl(filp, cmd, (unsigned long)arg);
+ 	}
+diff --git a/include/uapi/linux/msdos_fs.h b/include/uapi/linux/msdos_fs.h
+index a5773899f4d9..a584b009dacc 100644
+--- a/include/uapi/linux/msdos_fs.h
++++ b/include/uapi/linux/msdos_fs.h
+@@ -104,6 +104,8 @@ struct __fat_dirent {
+ #define FAT_IOCTL_SET_ATTRIBUTES	_IOW('r', 0x11, __u32)
+ /*Android kernel has used 0x12, so we use 0x13*/
+ #define FAT_IOCTL_GET_VOLUME_ID		_IOR('r', 0x13, __u32)
++/* Eudyptula FAT IOCTL implementation */
++#define FAT_IOCTL_SET_LABEL             _IOW('r', 0x14, const __user char*)
+ 
+ struct fat_boot_sector {
+ 	__u8	ignored[3];	/* Boot strap short or near jump */
+-- 
+2.26.0
+
