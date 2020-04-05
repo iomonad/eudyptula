@@ -27,6 +27,8 @@ In our case, we will add a new IOCTL command for FAT Systems, with 32bit compat:
 
 ## Implementing new IOCTL
 
+### Boilerplate
+
 FAT ioctl contralize calls in two functions:
 
 ```c
@@ -37,6 +39,21 @@ static long fat_dir_ioctl();
 // FOR 32bit Compat
 static long fat_compat_dir_ioctl();
 ```
+
+Add your newly created call in cmd match:
+
+```c
+       // For 64bit
+       case FAT_IOCTL_SET_LABEL:
+               if ((dir = inode->i_sb->s_root->d_inode))
+                       return fat_ioctl_set_label(dir, arg);
+               break;
+```
+
+Then implement your logic of your *return* function.
+
+### `fat_ioctl_set_label` logic
+
 
 - [1] https://en.wikipedia.org/wiki/Design_of_the_FAT_file_system
 - [2] http://www.circlemud.org/jelson/software/fusd/docs/node31.html
