@@ -73,6 +73,6 @@ Then check kernel logs:
 [ 4281.741738] Found matching pattern in packet (size=143): iomonad_computorz_lord !!
 ```
 
-[1] https://netfilter.org/documentation/HOWTO/fr/netfilter-hacking-HOWTO-3.html
-[2] http://amsekharkernel.blogspot.com/2014/08/what-is-skb-in-linux-kernel-what-are.html
-[3] https://www.kernel.org/doc/Documentation/core-api/kernel-api.rst
+- [1] https://netfilter.org/documentation/HOWTO/fr/netfilter-hacking-HOWTO-3.html
+- [2] http://amsekharkernel.blogspot.com/2014/08/what-is-skb-in-linux-kernel-what-are.html
+- [3] https://www.kernel.org/doc/Documentation/core-api/kernel-api.rst
