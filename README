@@ -3,3 +3,27 @@ to do for each levels.
 
 Each assignment are stored in dedicated
 level folder.
+
+Challenge Content:
+------------------
+
+01: Hello World Kernel module
+02: Building kernel from source
+03: Tweaking `EXTRAVERSION` kernel string
+04: Kernel coding style
+05: Simple USB event monitor
+06: Simple Char Device
+07: Working with `linux-next` remote
+08: Working with DebugFS
+09: Working with SysFS
+10: Submitting patches to the community
+11: Creating patch of running kernel module
+12: Working with kernel Linked List Implementation
+13: Using `kmem cache` slab allocators
+14: Hacking `task_struct` (PID)
+15: Implementing your Syscall
+16: Using kernel static code analyser (SPARSE)
+17: Using `kthreads` & Wait queues
+18: Blocking & delegating the workload
+19: Hacking your `netfilter` module
+20: Writing new IOCTL for FAT(32) FS
