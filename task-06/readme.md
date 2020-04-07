@@ -4,7 +4,7 @@
 make && sudo insmod *.ko
 ```
 
-## Create device note
+## Create device node
 
 We need to create a device node associated with our driver.
 We should retrieve the major number that our driver
